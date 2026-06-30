@@ -1641,3 +1641,158 @@ port settings (115200 8N1), 12
 readout buttons, 11
 
 *— End of user guide —*
+
+---
+
+# Part IV — Help Reference (exact values, complete lists, and troubleshooting)
+
+This section is written for the AI help assistant. It gives exact defaults, full option lists, and a troubleshooting guide taken directly from the program itself. **Where any detail here differs from the descriptions earlier in this guide, treat this section as authoritative** — it reflects the current program behavior precisely. Use it to give specific answers ("the default is X," "the range is Y to Z," "that control is not available") and to diagnose "why isn't this working" questions.
+
+## R1. Ports and network
+
+The server listens on **all network interfaces (0.0.0.0)**, so it is reachable from the LAN — and from the internet if the router forwards the port. The **access code is the only thing gating access** (see R2).
+
+| Purpose | Port | Notes |
+|---|---|---|
+| Browser (web page + live data) | **8765** | Configurable as "Server Port." This is the only port a user puts in a browser URL. |
+| Thetis CAT (radio control) | **13013** | Configurable. Thetis must have its CAT server enabled. |
+| Thetis TCI (bandscope, S-meter, power) | **50001** | Configurable. Thetis must have its TCI server enabled. |
+| MOX bus — broadcast | **5011 (UDP)** | How transmit state is shared with other programs. |
+| MOX bus — query/toggle | **5010 (UDP)** | Used by the optional MOX Control Server and remote PTT apps. |
+| KC4VO native audio server | **5002 (UDP)** | Default; changeable in the audio server window (needs a restart to take effect). |
+
+The displayed connect URL is `http://<this-PC's-LAN-IP>:8765`. For LAN use, give the Thetis PC a static IP or DHCP reservation so the URL doesn't change. For remote use, forward the server port on the router (optionally with a dynamic-DNS name) or use a mesh VPN like Tailscale.
+
+## R2. Access code and login
+
+The browser page is password-protected.
+
+- On **first run**, the server auto-generates a **12-character access code** (mixed-case letters and digits, with easily-confused characters removed). It is shown on the server's **Security** tab.
+- Opening the page shows a **login screen asking for the access code** before the control interface loads. One code is shared by all devices; many devices can use it at the same time.
+- **Sessions live in the server's memory only.** Restarting the server logs everyone out and they must re-enter the code — this is normal, not a fault.
+- **Wrong code** → the login page shows "Wrong code." There is no lockout or rate limiting.
+- The primary code is managed on the **Security** tab: show/hide it, set a custom code (minimum 6 characters), or generate a new one. Changing it affects new logins only; already-connected devices stay connected until the server restarts.
+- A separate optional **guest code** (Guest tab) has a hard expiration — presets 15 / 30 / 60 minutes, custom up to 240 minutes. It is empty by default. Revoking it immediately disconnects guest devices.
+
+## R3. Complete button library (and what is deliberately NOT included)
+
+The grid is built from a fixed library. If a control is not in the list below, it cannot be added as a button.
+
+- **Bands:** 160 M, 80 M, 60 M, 40 M, 20 M, 17 M, 15 M, 12 M, 10 M. **Not included as band buttons:** 30 M, 6 M, and any VHF/UHF band. (Typed frequency entry and scope-tuning do accept 6 m and the other ham bands; there is simply no 6 M *button*.)
+- **Modes:** LSB, USB, FM, AM. **Not included:** CW, the digital modes (DIGU/DIGL), SAM, DRM, SPEC. A CW or FT8 operator sets the mode at the radio or in their digital software; Web Commander does not have those mode buttons.
+- **Filter widths:** 5.0k, 4.4k, 3.8, 3.3k, 2.9, 2.7, 2.4 (kHz; the labels are abbreviated).
+- **Receive toggles:** two full sets of noise tools — NR2-1, NB1-1, NB2-1, ANF-1 (first set) and NR2-2, NB1-2, NB2-2, ANF-2 (second set) — plus Mute 1, Mute 2, RX2 (on/off).
+- **Transmit toggles:** Tune, VOX, 2 Tone, PS-A (PureSignal), Monitor.
+- **Audio routing toggles:** VAC1, VAC2.
+- **Misc toggles:** Lock A, Lock B, VFO Sync, Power.
+- **Client-side action buttons** (these affect only this browser, not the radio): Mobile (shrink to the MOX-only overlay), Poor Cnx (Poor Connection Mode), DS (data-saver — cycles the bandscope frame rate between 30 and 5 fps), and four wattmeter readout buttons.
+
+**Wattmeter readout buttons** are **hidden by default** — the user adds them from the Configuration page. There are four, told apart by letter case: lowercase **pwr / swr** show the *exciter* (the radio's own output, before any amplifier); uppercase **PWR / SWR** show the *LP100A* reading (true output after the amplifier). The uppercase pair shows "n/a" when no LP100A is connected.
+
+The fixed tuning buttons (Down 5, Down 1, UP 1, UP 5), the RX1/RX2 selector, and the toolbar (Scope, Sliders, Buttons, Refresh, Config) are always present and not part of the configurable library.
+
+## R4. Tuning, step sizes, and the bandscope as a tuning surface
+
+- **Step sizes:** 10 Hz, 100 Hz, 500 Hz, **1 kHz (default)**, 100 kHz, 1 MHz, and **Snap**. Snap is an action, not a step: it rounds the current frequency to the nearest multiple of the selected step (e.g. with Step = 1 kHz it snaps to the nearest whole kHz), then returns the selector to the previous step.
+- **Up/Down buttons:** one tap = one step (or five for the "5" buttons); press and hold to tune continuously.
+- **Tuning on the bandscope/waterfall is ON by default.** Mouse wheel = ±1 of the current step per notch (wheel up tunes up). Click or tap = tune to that point, snapped to the current step grid. Both stay inside the ham band edges. There is a per-device padlock that disables tap/wheel tuning while leaving the buttons and keypad working — this is separate from Thetis's Lock A/Lock B.
+- **Direct entry:** the keypad enters frequency in **kHz.Hz** format, e.g. `14205.010` = 14,205.010 kHz = 14.205010 MHz. Out-of-band entries are rejected with "Invalid frequency."
+
+## R5. Bandscope, waterfall, transmit display, S-meter — exact defaults and ranges
+
+**Receive bandscope controls** (each receiver has its own independent set):
+
+| Control | Default | Range |
+|---|---|---|
+| Gain | **1.0×** | 0.5–4.0, step 0.1 |
+| Zoom | **80** | 0–95 |
+| Smooth | **150 ms** | 30–500 |
+| Auto Ref | **On** | on/off (off pins the floor and the display can look wrong) |
+| Opacity (gradient fill) | **85%** | 10–100 |
+| Gradient Fill | **On** | on/off |
+| Trace color (hue) | 200 (blue) | 0–360 |
+| Palette | **Classic** | Classic, Thermal, Fire, Viridis, Inferno, Plasma, Grayscale, Phosphor |
+
+FFT size and detector are fixed internally and are **not** user-adjustable controls in this interface.
+
+**Color meaning (Classic palette only):** colors are tied to absolute signal strength. Thresholds: green below about **−85 dBm** (~S7), green→yellow at −85 dBm, yellow→orange at **−68 dBm** (S9+5), orange→red at **−63 dBm** (S9+10), red→bright red at **−58 dBm** (S9+15), solid bright red above that. The other palettes use smooth gradients without these absolute bands. The color calibration re-derives itself live and takes about **2–4 seconds to settle** after a band change or after unkeying — colors can look off briefly during that window, and on a very busy band the anchor is less reliable (press Recal to force it).
+
+**Waterfall controls:** Low **−130 dB** (range −180 to −20), High **−80 dB** (range −180 to +20), Hide **30** (0–255), Fade **100** (0–255), Bright **100% / 1.00×** (50–200). The waterfall shares the bandscope's palette.
+
+**Transmit display:** at key-down the carrier peak locks to a fixed spot near the top and the display becomes a dB-below-carrier (dBc) ruler.
+
+| TX control | Default | Range |
+|---|---|---|
+| Show IMD3 estimate | On | on/off (master switch for the IMD3 numbers) |
+| Auto Zoom on TX | On | on/off |
+| TX Zoom | **85** | 0–95 |
+| TX Range (dB shown below carrier) | **70 dBc** | 40–100 |
+| TX Ref line | **−55 dBc** | −90 to −30 |
+| TX Ref line on/off | On | on/off |
+
+**IMD3 estimate timing:** it ignores the first **3 seconds** after key-down (warm-up), then samples the close-in shoulder region (about **150 Hz to 1.5 kHz** from the carrier), shows a ~2-second median that refreshes once per second, and after unkey shows the transmission's average. Transmissions shorter than about **4 seconds of usable data** show "insufficient data." This is a voice-driven estimate for comparing your own settings, **not** a formal two-tone IMD3 measurement.
+
+**S-meter:** standard scale, S9 = −73 dBm, 6 dB per S-unit, above S9 shown as "S9+N." It is fed by Thetis's own meter pushed over TCI (not polled), and is blanked during transmit (the receiver is muted while you key).
+
+**Mic meter (during transmit):** scale runs −20 to +12 dB; the scale turns **red above 0 dB** (where Thetis's ALC starts acting) and is white at/below 0. The **Mic Cal** offset defaults to **+13 dB** (range 0–25) to make this reading agree with Thetis's own peak-reading mic meter.
+
+## R6. Audio — two independent paths, both optional, both off by default
+
+Web Commander carries no audio by itself. It offers two separate audio transports, each on its own tab in the server window. A user can run neither, either, or both.
+
+- **VDO.Ninja audio bridge** — browser-based audio. The Thetis PC runs a hidden browser instance that relays audio through vdo.ninja; the user listens in a second browser tab on their device. One-time setup: enter an **ID prefix** (callsign) and choose which virtual audio cable is receive and which is transmit. The user-facing host volume control runs **0–500% (default 100% = unity)**. There are two client links — one for headphones, one for no headphones (the no-headphones link adds echo cancellation so the phone speaker doesn't get retransmitted).
+- **KC4VO native low-latency audio server** — a separate UDP audio server (default port **5002**) for the native "Thetis Audio Commander" app on Android/Windows/iOS. It includes the **AirBrake mic gate** (see below). Buffer defaults to 50 ms (client can request 10–500 ms).
+
+Both are launched from their tab, with an optional "enable on Web Commander start" checkbox each (both default off). Starting/stopping from the button is one-shot and does not change the start-up setting.
+
+**AirBrake mic gate (native audio server only):** when operating with a phone's speaker and mic, keying transmit lets a tail of receive audio bleed from the speaker into the mic and onto the air as a noise burst. The AirBrake gate mutes the phone mic for a hold time right after keying to swallow that tail. Slider label **"AirBrake Reduction,"** range **0–1000 ms in 50 ms steps, default 650 ms, 0 = off**. It arms on the keying event itself (off the MOX bus). Headphones eliminate the bleed entirely and make the gate unnecessary.
+
+## R7. LP100A wattmeter — exact behavior
+
+- **Serial settings: 115200 baud, 8 data bits, no parity, 1 stop bit (115200, N, 8, 1).**
+- **USB meters auto-detect.** The program identifies the LP100A by its FTDI USB-serial chip and remembers it by serial number, so it keeps working even when Windows assigns a different COM number. No COM port to choose.
+- **Native/non-USB serial ports need the Manual Connection path** (auto-detect only finds USB-FTDI cables). In the LP100A Setup window, enter the COM port (a bare number like `7` becomes `COM7`). **The user must also make sure Windows has that port set to 115200, 8, None, 1 in Device Manager** — a native port left at the Windows default of 9600 will connect but the readings won't decode, and the meter shows as "not found." (This is the single most common native-serial problem.)
+- **"Not found" always means the meter didn't answer in LP100A format** — wrong port, wrong baud, wrong cable, the meter switched off, or another program holding the port. There is no "connected but garbled" state; a port that doesn't decode is treated as absent.
+- A pinned meter that gets unplugged is reported as not found rather than silently switching to a different meter. If several LP100As are attached, the LP100A Setup window lets the user pick which one feeds the readouts.
+- The desktop "LP100A Window" shows power and SWR in large type on the radio PC's own screen; it reads dashes until you transmit.
+
+## R8. MOX / transmit indication — what lights the button and what doesn't
+
+The on-screen MOX button (and the red wattmeter readouts) light up **only for transmit events that are broadcast on the MOX bus (UDP 5011).** Those are:
+
+- Pressing MOX in the browser (or a bound Flic button).
+- The optional MOX Control Server's own button or its Scroll Lock / Ctrl+F12 hotkeys.
+- A remote PTT app sending a toggle.
+
+**Transmit started at the radio is invisible to the MOX button:** a hardware mic PTT, a foot switch, a CW key, VOX, or Tune/2-Tone keyed at the radio will **not** turn the button red. This is by design — the MOX bus is event-driven, and nothing continuously polls the radio's transmit state, so radio-side keying never produces a broadcast. (The lowercase **exciter** wattmeter readouts *do* react to any transmit, because those come from Thetis over TCI — so power can show while the MOX button stays idle.)
+
+To make hardware PTT visible to the browser, run a program that keys through the MOX bus. The **MOX Control Server** is the companion for this: it's optional, not required (browser PTT works without it), and it adds global Scroll Lock / Ctrl+F12 PTT hotkeys plus remote toggling. But even it only reflects keying that goes *through* it — a foot switch wired straight to the radio still won't show.
+
+**Safety on a lost connection:** if the connection drops while keyed, Web Commander does **not** auto-unkey on an ordinary network blip — that's deliberate, to avoid audible unkey/rekey glitches on flaky cellular. **Thetis's own MOX timeout is what drops the carrier** if the operator vanishes, so that timeout should be set. Web Commander does unkey when the operator deliberately shuts the server down.
+
+## R9. The large-screen layout
+
+- It is **on by default** and turns on automatically at a visible window width of about **800 pixels or more** (a three-column arrangement appears at about **1100 px or more** in landscape; narrower than that is a single column). A user can opt back to the phone layout in the Configuration page. *(Ignore any wording that says "desktop only / ≥1200px" — the actual thresholds are ~800 and ~1100.)*
+- It shows both receivers' frequency and S-meter at the top, the bandscope in the center, the MOX button on the right, and the button grid in a band below the scope; both RX scopes can be shown at once.
+- In the three-column arrangement the Sliders toolbar button is hidden (the slider panel is always shown there), so "the Sliders button does nothing / is missing" on a wide screen is expected.
+
+## R10. Connecting and staying connected
+
+- **Auto-reconnect is always on.** The page reconnects on its own after any drop, roughly every 2 seconds, and never gives up. (Any older "Auto-Reconnect checkbox" described elsewhere no longer applies — there's nothing to turn off.)
+- A heartbeat runs about once a second. A brief stall (~3 s) turns the status dot amber but stays connected; a real dead connection (~12 s) forces a reconnect. Transmit is not dropped during that window.
+- On a phone, returning to the page after it was in the background triggers a quick check and fast reconnect if the link died while away.
+- **iOS:** use **Safari directly**; do not add the page to the home screen as a standalone app. iOS suspends home-screen web apps aggressively, which causes repeated false disconnects. (This supersedes any earlier "Add to Home Screen on iPhone" suggestion — on iOS, a normal Safari tab is the recommended way.)
+
+## R11. Troubleshooting matrix (symptom → cause → fix)
+
+- **Page won't load / browser hangs on "Connecting…":** the server isn't running, the URL's IP or port is wrong, or a firewall is blocking port 8765 on the Thetis PC. Confirm the server's status window shows the URL it expects; add a firewall exception for the server. If you reach a login page but it rejects you, the access code is wrong (find it on the server's Security tab).
+- **Frequency shows `-----.---` and never updates:** the TCI connection to Thetis is down. Enable Thetis's TCI server and check the TCI host/port on the Server tab; restart the server after changing TCI settings.
+- **Bandscope is empty or grey:** same cause as above — the bandscope is fed entirely by TCI; if TCI is down there's nothing to draw. A brief blank is also normal right after a big zoom or band change while the display settles.
+- **Bandscope colors look wrong after changing bands:** the color calibration is still settling (about 2–4 seconds); press Recal to force it. A very busy band makes the calibration less reliable.
+- **Wattmeter shows "n/a" / not found:** the meter didn't answer. For a USB meter, check the cable and that it's powered. For a native serial port, set the port to **115200, 8, None, 1** in Windows Device Manager and confirm you used Manual Connection. A meter you pinned that's now unplugged also reports not found.
+- **The MOX button won't light when I key with my mic / foot switch / CW key:** that's by design — radio-side keying isn't broadcast on the MOX bus. Use the browser MOX button, a bound Flic, or the MOX Control Server's hotkeys if you want the button to follow your keying. The exciter power readout will still react.
+- **No audio:** identify which transport you set up. VDO.Ninja: make sure you completed the one-time setup (ID prefix and which virtual cable is RX/TX) — without it, audio goes to the wrong devices and never reaches the radio; also confirm Chrome or Edge is installed on the Thetis PC. Native KC4VO server: make sure it's started and the app is pointed at this PC's IP and the right port (default 5002).
+- **TX noise burst on key-up over a phone speaker:** raise the AirBrake gate (native audio server) toward 650 ms, or use headphones (which removes the problem entirely).
+- **Audio is choppy (native server):** increase the buffer (10–500 ms). **Audio is delayed:** a fresh connection settles to minimum latency after a few seconds of warm-up.
+- **Transmit stayed up after I lost connection:** Web Commander intentionally doesn't unkey on a network blip; Thetis's own MOX timeout drops the carrier, so make sure that timeout is set in Thetis. Unkey manually if needed.
+- **iPhone keeps disconnecting:** use a normal Safari tab, not a home-screen shortcut.
